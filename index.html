@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Collier Family Tree</title>
+  <!-- Copyright 1998-2020 by Northwoods Software Corporation. -->
+  <meta name="description" content="A family tree diagram of British royalty." />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script src="https://unpkg.com/gojs/release/go-debug.js"></script>
+  <link href='https://fonts.googleapis.com/css?family=Droid+Serif:400,700' rel='stylesheet' type='text/css'>
+  <script id="code">
+    function init() {
+      var $ = go.GraphObject.make;  // for conciseness in defining templates
+
+      myDiagram =
+        $(go.Diagram, "familyTreeDiv",  // must be the ID or reference to div
+          {
+            "toolManager.hoverDelay": 100,  // 100 milliseconds instead of the default 850
+            allowCopy: false,
+            layout:  // create a TreeLayout for the family tree
+              $(go.TreeLayout,
+                { angle: 90, nodeSpacing: 10, layerSpacing: 40, layerStyle: go.TreeLayout.LayerUniform })
+          });
+
+      var bluegrad = '#90CAF9';
+      var pinkgrad = '#F48FB1';
+
+      // get tooltip text from the object's data
+      function tooltipTextConverter(person) {
+        var str = "";
+        str += "Born: " + person.birthYear;
+        if (person.deathYear !== undefined) str += "\nDied: " + person.deathYear;
+        if (person.location !== undefined) str += "\nLocation: " + person.location;
+        return str;
+      }
+
+      // define tooltips for nodes
+      var tooltiptemplate =
+        $("ToolTip",
+          { "Border.fill": "whitesmoke", "Border.stroke": "black" },
+          $(go.TextBlock,
+            {
+              font: "bold 8pt Helvetica, bold Arial, sans-serif",
+              wrap: go.TextBlock.WrapFit,
+              margin: 5
+            },
+            new go.Binding("text", "", tooltipTextConverter))
+        );
+
+      // define Converters to be used for Bindings
+      function genderBrushConverter(gender) {
+        if (gender === "M") return bluegrad;
+        if (gender === "F") return pinkgrad;
+        return "orange";
+      }
+
+      // replace the default Node template in the nodeTemplateMap
+      myDiagram.nodeTemplate =
+        $(go.Node, "Auto",
+          { deletable: false, toolTip: tooltiptemplate },
+          new go.Binding("text", "name"),
+          $(go.Shape, "RoundedRectangle",
+            {
+              fill: "lightgray",
+              stroke: null, strokeWidth: 0,
+              stretch: go.GraphObject.Fill,
+              alignment: go.Spot.Center
+            },
+            new go.Binding("fill", "gender", genderBrushConverter)),
+          $(go.TextBlock,
+            {
+              font: "500 12px Droid Serif, sans-serif",
+              textAlign: "center",
+              margin: 12, maxSize: new go.Size(80, NaN)
+            },
+            new go.Binding("text", "name"))
+        );
+
+      // define the Link template
+      myDiagram.linkTemplate =
+        $(go.Link,  // the whole link panel
+          { routing: go.Link.Orthogonal, corner: 10, selectable: false },
+          $(go.Shape, { strokeWidth: 2, stroke: '#888' }));  // the gray link shape
+
+      // here's the family data
+      var nodeDataArray = [
+        { key: 0, name: "Jonathan Collier", parent: 2, gender: "M", birthYear: "1979", location: "Waltham, MA" },
+        { key: 1, name: "Jessica Collier", parent: 2, gender: "F", birthYear: "1982", location: "Saranac Lake, NY" },
+        { key: 2, name: "Robert Collier", parent: 3, gender: "M", birthYear: "1948", location: "Tupper Lake, NY" },
+        { key: 8, name: "Catherine Collier", parent: 3, gender: "F", birthYear: "1954", location: "Peekskill, NY" },
+        { key: 9, name: "John Edward Collier", parent: 4, gender: "M", birthYear: "1914", location: "Peekskill, NY" },
+        { key: 3, name: "Robert Collier", parent: 4, gender: "M", birthYear: "1922", location: "Peekskill, NY" },
+        { key: 10, name: "William Collier", parent: 4, gender: "M", birthYear: "1922", location: "Peekskill, NY" },
+        { key: 4, name: "Edward Oakley Collier", parent: 5, gender: "M", birthYear: "1884", location: "Peekskill, NY" },
+        { key: 11, name: "Elizabeth Horne", parent: 5, gender: "F", birthYear: "1886", location: "Peekskill, NY" },
+        { key: 13, name: "Augustus Collier", parent: 6, gender: "M", birthYear: "1839", location: "" },
+        { key: 14, name: "Daniel Collier", parent: 6, gender: "M", birthYear: "1841", location: "" },
+        { key: 12, name: "George Washington Collier", parent: 6, gender: "M", birthYear: "1843", location: "" },
+        { key: 15, name: "Sarah Collier", parent: 6, gender: "F", birthYear: "1845", location: "" },
+        { key: 5, name: "John Edward Collier", parent: 6, gender: "M", birthYear: "1848", location: "Peekskill, NY" },
+        { key: 16, name: "Franklin Pierce Collier", parent: 6, gender: "M", birthYear: "1850", location: "" },
+        { key: 17, name: "Katherine Collier", parent: 6, gender: "F", birthYear: "1863", location: "" },
+        { key: 18, name: "Daniel Shafer Collier", parent: 7, gender: "M", birthYear: "1804", location: "Montgomery, NY" },
+        { key: 6, name: "Abraham Collier", parent: 7, gender: "M", birthYear: "1807", location: "Montgomery, NY" },
+        { key: 7, name: "Uriah Collier", gender: "M", birthYear: "1766", location: "Montgomery, NY" },
+
+
+      ];
+
+      // create the model for the family tree
+      myDiagram.model = new go.TreeModel(nodeDataArray);
+
+      document.getElementById('zoomToFit').addEventListener('click', function() {
+        myDiagram.commandHandler.zoomToFit();
+      });
+
+      document.getElementById('centerRoot').addEventListener('click', function() {
+        myDiagram.scale = 1;
+        myDiagram.scrollToRect(myDiagram.findNodeForKey(0).actualBounds);
+      });
+
+    }
+  </script>
+</head>
+<body onload="init()">
+<div id="content">
+  <div id="familyTreeDiv" style="background-color: white; width: 100%; height: 750px"></div>
+  <p style="display: none;"><button id="zoomToFit">Zoom to Fit</button> <button id="centerRoot">Center on root</button></p>
+  <hr size="1" />
+</div>
+</body>
+</html>
